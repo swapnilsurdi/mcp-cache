@@ -1,5 +1,5 @@
 {
-  "name": "mcp-cache",
+  "name": "@hapus/mcp-cache",
   "version": "0.1.0",
   "description": "Universal response management wrapper for any MCP server",
   "main": "dist/index.js",
