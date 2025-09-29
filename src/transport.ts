@@ -116,13 +116,13 @@ export class TargetServerTransport {
       const message = JSON.stringify(request) + '\n';
       this.inputStream?.write(message);
 
-      // Timeout after 30 seconds
+      // Timeout after 60 seconds (longer for npx downloads)
       setTimeout(() => {
         if (this.messageHandlers.has(id)) {
           this.messageHandlers.delete(id);
           reject(new Error('Request timeout'));
         }
-      }, 30000);
+      }, 60000);
     });
   }
 
