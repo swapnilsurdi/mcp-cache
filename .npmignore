@@ -1,0 +1,39 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Build config
+tsconfig.json
+
+# Git
+.git/
+.gitignore
+
+# Tests
+tests/
+*.test.js
+*.spec.js
+
+# Documentation
+CONTRIBUTING.md
+PRD.md
+.github/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+.env
+.env.*

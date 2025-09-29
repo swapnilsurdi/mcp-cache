@@ -1,0 +1,44 @@
+{
+  "name": "mcp-cache",
+  "version": "0.1.0",
+  "description": "Universal response management wrapper for any MCP server",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "mcp-cache": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node --test",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "proxy",
+    "cache",
+    "pagination"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swapnilsurdi/mcp-cache.git"
+  },
+  "bugs": {
+    "url": "https://github.com/swapnilsurdi/mcp-cache/issues"
+  },
+  "homepage": "https://github.com/swapnilsurdi/mcp-cache#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "jsonpath-plus": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
