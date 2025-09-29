@@ -48,8 +48,9 @@ export class MCPProxy {
 
   private setupHandlers(): void {
     // Capture client info when server is connected
-    this.server.onclose = () => {
+    this.server.onclose = async () => {
       console.error('mcp-cache: Client disconnected');
+      await this.cleanup();
     };
 
     // Handle tool listing
@@ -89,7 +90,7 @@ export class MCPProxy {
     return [
       {
         name: 'query_response',
-        description: 'Query a cached large response using text search, JSONPath, or regex. IMPORTANT: Use limit parameter to control result size - start with limit=10 for large datasets.',
+        description: 'Query a cached large response using text search (case-insensitive by default), JSONPath, or regex. Results include context lines and chunk indicators. IMPORTANT: Use limit parameter to control result size - start with limit=10 for large datasets.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -99,7 +100,7 @@ export class MCPProxy {
             },
             query: {
               type: 'string',
-              description: 'Query string (JSONPath starts with $, regex in /pattern/, text otherwise)',
+              description: 'Query string. Text search (default, case-insensitive, partial matching), JSONPath (starts with $), or regex (/pattern/flags)',
             },
             mode: {
               type: 'string',
@@ -109,6 +110,14 @@ export class MCPProxy {
             limit: {
               type: 'number',
               description: 'Maximum number of results to return (default: 100, recommended: 10-20 for large responses)',
+            },
+            contextLines: {
+              type: 'number',
+              description: 'Number of context lines before/after each match (default: 2)',
+            },
+            caseSensitive: {
+              type: 'boolean',
+              description: 'Enable case-sensitive search for text mode (default: false)',
             },
           },
           required: ['response_id', 'query'],
@@ -227,14 +236,14 @@ export class MCPProxy {
   }
 
   private async handleQueryResponse(args: any): Promise<any> {
-    const { response_id, query, mode, limit } = args;
+    const { response_id, query, mode, limit, contextLines, caseSensitive } = args;
     const data = await this.cacheManager.get(response_id);
 
     if (!data) {
       throw new Error(`Response ${response_id} not found or expired`);
     }
 
-    const results = this.queryEngine.query(data, query, { mode, limit });
+    const results = this.queryEngine.query(data, query, { mode, limit, contextLines, caseSensitive });
 
     // Check if results are too large
     const resultsStr = JSON.stringify(results, null, 2);
@@ -252,7 +261,7 @@ export class MCPProxy {
                   `${truncated}\n\n` +
                   `[... ${(resultsStr.length - MAX_RESPONSE_SIZE)} bytes truncated]\n\n` +
                   `Total results: ${results.total || 'unknown'}\n` +
-                  `Tip: Use a more specific query or increase the 'limit' parameter to get fewer results.`,
+                  `Tip: Use a more specific query or lower 'limit' parameter to get fewer results.`,
           },
         ],
       };
@@ -425,6 +434,15 @@ export class MCPProxy {
     }
   }
 
+  private async cleanup(): Promise<void> {
+    try {
+      await this.targetTransport.stop();
+      this.cacheManager.stop();
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+    }
+  }
+
   async start(): Promise<void> {
     // Start target server
     await this.targetTransport.start();
@@ -445,6 +463,30 @@ export class MCPProxy {
     // Connect our server to stdio
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
+
+    // Handle process signals for graceful shutdown
+    process.on('SIGINT', async () => {
+      console.error('mcp-cache: Received SIGINT, shutting down...');
+      await this.cleanup();
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', async () => {
+      console.error('mcp-cache: Received SIGTERM, shutting down...');
+      await this.cleanup();
+      process.exit(0);
+    });
+
+    // Handle uncaught errors to prevent crashes
+    process.on('uncaughtException', (error) => {
+      if ((error as any).code === 'EPIPE') {
+        console.error('mcp-cache: Client pipe closed');
+        this.cleanup().then(() => process.exit(0));
+      } else {
+        console.error('mcp-cache: Uncaught exception:', error);
+        this.cleanup().then(() => process.exit(1));
+      }
+    });
 
     // The MCP SDK handles initialization automatically
     // We'll extract client info from the first tool call

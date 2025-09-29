@@ -44,6 +44,8 @@ export interface QueryOptions {
   mode?: 'text' | 'jsonpath' | 'regex';
   limit?: number;
   offset?: number;
+  contextLines?: number; // Lines of context before/after match
+  caseSensitive?: boolean; // Default: false
 }
 
 export const CLIENT_PRESETS: Record<string, number> = {
