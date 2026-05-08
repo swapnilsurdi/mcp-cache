@@ -1,7 +1,7 @@
 {
   "name": "@hapus/mcp-cache",
-  "version": "0.1.0",
-  "description": "Universal response management wrapper for any MCP server",
+  "version": "0.2.0",
+  "description": "Universal caching proxy for any MCP server — dedup, session management, context compression support",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
